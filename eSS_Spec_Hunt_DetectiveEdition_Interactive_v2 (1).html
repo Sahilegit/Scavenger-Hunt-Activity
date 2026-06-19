@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🕵️ ecobee Smart Security Scavenger Hunt — Detective Edition v2.1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Special+Elite&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --teal: #00AAAA; --teal-dark: #008080; --teal-light: #E0F7F7;
+    --navy: #142850; --navy-light: #1f3a6e;
+    --gold: #D4A017; --gold-light: #FFF6DA;
+    --green: #145A32;
+    --bg: #F7FAFB; --bg-card: #FFFFFF;
+    --text: #2C3E50; --text-muted: #6B7A8F;
+    --border: #E1E8ED;
+    --shadow-sm: 0 2px 8px rgba(20,40,80,0.06);
+    --shadow-md: 0 6px 20px rgba(20,40,80,0.10);
+    --shadow-lg: 0 12px 40px rgba(20,40,80,0.18);
+    --radius: 14px;
+    --transition: all 0.28s cubic-bezier(.2,.8,.2,1);
+  }
+  [data-theme="dark"] {
+    --teal: #2DD4D4; --teal-dark: #00AAAA; --teal-light: #133838;
+    --navy: #0A1428; --navy-light: #1c2d4e;
+    --gold: #F5C842; --gold-light: #3a2f10;
+    --bg: #0E1620; --bg-card: #182331;
+    --text: #E6EDF3; --text-muted: #8B98AB;
+    --border: #2A3645;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; line-height: 1.6; transition: var(--transition); -webkit-font-smoothing: antialiased; }
+  .case-label { font-family: 'Special Elite', monospace; letter-spacing: 0.08em; }
+
+  header.sticky { position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, var(--navy), var(--navy-light)); color: #fff; box-shadow: var(--shadow-md); padding: 12px 24px; }
+  .header-inner { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+  .brand .badge { background: var(--gold); color: var(--navy); padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; }
+  .timer-display { font-family: 'Special Elite', monospace; background: rgba(255,255,255,0.10); padding: 6px 14px; border-radius: 8px; font-weight: 600; border: 1px solid rgba(255,255,255,0.15); min-width: 110px; text-align: center; }
+  .progress-wrap { flex: 1; min-width: 200px; }
+  .progress-bar { height: 10px; background: rgba(255,255,255,0.15); border-radius: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--teal), var(--gold)); width: 0%; transition: width 0.4s ease; box-shadow: 0 0 12px rgba(0,170,170,0.5); }
+  .progress-label { font-size: 0.75rem; opacity: 0.85; margin-top: 4px; }
+  .header-actions { display: flex; gap: 8px; align-items: center; }
+  button.btn { border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: inherit; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--gold); color: var(--navy); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(212,160,23,0.4); }
+  .btn-secondary { background: var(--teal); color: #fff; }
+  .btn-secondary:hover { background: var(--teal-dark); transform: translateY(-1px); }
+  .btn-ghost { background: rgba(255,255,255,0.10); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+  .theme-toggle { background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.2); color: #fff; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; transition: var(--transition); }
+  .theme-toggle:hover { background: rgba(255,255,255,0.20); transform: rotate(20deg); }
+
+  .layout { display: grid; grid-template-columns: 240px 1fr; gap: 32px; max-width: 1280px; margin: 32px auto; padding: 0 24px; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .sidenav { display: none !important; } }
+  .sidenav { position: sticky; top: 100px; align-self: start; background: var(--bg-card); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); max-height: calc(100vh - 130px); overflow-y: auto; }
+  .sidenav h4 { margin: 0 0 12px; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+  .sidenav ul { list-style: none; padding: 0; margin: 0; }
+  .sidenav li { margin: 4px 0; }
+  .sidenav a { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; color: var(--text); text-decoration: none; font-size: 0.88rem; font-weight: 500; transition: var(--transition); }
+  .sidenav a:hover { background: var(--teal-light); color: var(--teal-dark); }
+  .sidenav a.active { background: var(--teal); color: #fff; }
+  .sidenav .zone-status { margin-left: auto; font-size: 0.7rem; opacity: 0.7; }
+  .sidenav .zone-status.done { color: #16a34a; opacity: 1; }
+  .sidenav a.active .zone-status { color: #fff; opacity: 1; }
+
+  .hero { background: linear-gradient(135deg, var(--navy), var(--navy-light) 60%, var(--teal-dark)); color: #fff; padding: 50px 40px; border-radius: var(--radius); box-shadow: var(--shadow-lg); margin-bottom: 32px; position: relative; overflow: hidden; }
+  .hero::before { content: ""; position: absolute; top: -50%; right: -10%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(212,160,23,0.20), transparent 70%); }
+  .hero::after { content: "🕵️"; position: absolute; bottom: 10px; right: 30px; font-size: 8rem; opacity: 0.08; }
+  .hero .case-id { display: inline-block; background: var(--gold); color: var(--navy); padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.12em; }
+  .hero h1 { font-size: 2.8rem; line-height: 1.1; margin: 18px 0 8px; font-weight: 800; }
+  .hero h1 .accent { color: var(--gold); }
+  .hero .tagline { font-size: 1.1rem; opacity: 0.85; font-style: italic; margin-bottom: 24px; }
+  .mission-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-top: 24px; position: relative; z-index: 1; }
+  .stat-card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 14px; backdrop-filter: blur(8px); }
+  .stat-card .stat-label { font-size: 0.7rem; opacity: 0.75; letter-spacing: 0.08em; text-transform: uppercase; }
+  .stat-card .stat-value { font-weight: 700; margin-top: 4px; font-size: 0.95rem; }
+
+  .briefing { background: var(--bg-card); border-radius: var(--radius); padding: 32px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); margin-bottom: 32px; }
+  .briefing h2 { margin: 0 0 16px; color: var(--teal-dark); font-size: 1.4rem; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid var(--teal); padding-bottom: 12px; }
+  .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  @media (max-width: 700px) { .steps { grid-template-columns: 1fr; } }
+  .step { background: linear-gradient(135deg, var(--teal-light), var(--bg-card)); border-left: 4px solid var(--teal); padding: 16px 18px; border-radius: 10px; }
+  .step .step-label { font-weight: 700; color: var(--teal-dark); margin-bottom: 6px; }
+  .warning { background: var(--gold-light); border-left: 4px solid var(--gold); padding: 16px 18px; border-radius: 10px; margin-top: 18px; }
+  .warning .warn-title { font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+
+  .name-input-block { margin-top: 20px; }
+  .name-input-block label { display: block; font-weight: 600; color: var(--teal-dark); margin-bottom: 6px; font-size: 0.92rem; }
+  .name-input { width: 100%; max-width: 400px; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-family: inherit; font-size: 0.95rem; transition: var(--transition); }
+  .name-input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 4px rgba(0,170,170,0.12); }
+
+  .start-mission { display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+  #startBtn { background: linear-gradient(135deg, var(--teal), var(--teal-dark)); color: #fff; padding: 14px 32px; font-size: 1rem; font-weight: 700; border-radius: 30px; border: none; cursor: pointer; box-shadow: 0 6px 18px rgba(0,170,170,0.35); transition: var(--transition); }
+  #startBtn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,170,170,0.45); }
+  #startBtn.paused { background: linear-gradient(135deg, var(--gold), #b88810); }
+  #resetTimerBtn { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 12px 18px; border-radius: 30px; cursor: pointer; font-weight: 500; }
+
+  .zone { margin-bottom: 36px; opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .zone.in-view { opacity: 1; transform: translateY(0); }
+  .zone-banner { display: flex; align-items: center; gap: 16px; background: linear-gradient(135deg, var(--navy), var(--navy-light)); color: #fff; padding: 18px 24px; border-radius: var(--radius); box-shadow: var(--shadow-md); margin-bottom: 20px; position: relative; overflow: hidden; }
+  .zone-banner::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 6px; background: var(--teal); }
+  .zone-banner .zone-num { background: var(--gold); color: var(--navy); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em; }
+  .zone-banner h2 { margin: 0; font-size: 1.5rem; font-weight: 700; flex: 1; }
+  .zone-banner .zone-complete-badge { background: #16a34a; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; opacity: 0; transition: var(--transition); }
+  .zone-banner .zone-complete-badge.show { opacity: 1; }
+
+  .dossier-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; }
+  .dossier { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); padding: 22px; transition: var(--transition); position: relative; overflow: hidden; }
+  .dossier::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--teal), var(--gold)); opacity: 0.7; }
+  .dossier:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+  .dossier.complete::before { background: linear-gradient(90deg, #16a34a, #4ade80); opacity: 1; }
+  .dossier.complete { border-color: #4ade80; }
+  .dossier-label { display: inline-flex; align-items: center; gap: 6px; color: var(--gold); font-weight: 700; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
+  .dossier-title { margin: 6px 0 14px; color: var(--green); font-size: 1.05rem; font-weight: 700; text-transform: uppercase; padding-bottom: 10px; border-bottom: 1.5px solid var(--teal-light); }
+  [data-theme="dark"] .dossier-title { color: var(--teal); }
+  .question { margin-bottom: 14px; }
+  .question-text { font-size: 0.92rem; font-weight: 500; color: var(--text); margin-bottom: 6px; display: flex; gap: 8px; }
+  .question-text::before { content: "🔎"; flex-shrink: 0; }
+  .answer-input, .answer-textarea { width: 100%; border: 1.5px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; padding: 10px 12px; font-family: inherit; font-size: 0.9rem; transition: var(--transition); resize: vertical; }
+  .answer-textarea { min-height: 56px; }
+  .answer-input:focus, .answer-textarea:focus { outline: none; border-color: var(--teal); background: var(--bg-card); box-shadow: 0 0 0 4px rgba(0,170,170,0.12); }
+  .answer-input.filled, .answer-textarea.filled { border-color: #4ade80; background: rgba(74,222,128,0.06); }
+
+  .alert-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .alert-cell { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+  .alert-cell .alert-label { font-weight: 700; color: var(--teal-dark); margin-bottom: 8px; font-size: 0.85rem; }
+  .alert-cell input { text-align: center; }
+
+  .bonus-banner { background: linear-gradient(135deg, var(--gold), #f0b830); color: var(--navy); }
+  .bonus-banner .zone-num { background: var(--navy); color: var(--gold); }
+  .bonus-banner h2 { color: var(--navy); }
+  .toolkit-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 18px; }
+  .tool-card { background: var(--bg-card); border-radius: var(--radius); padding: 22px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+  .tool-card h3 { margin: 0 0 14px; font-size: 1.05rem; color: var(--navy); display: flex; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 2px solid var(--gold); }
+  [data-theme="dark"] .tool-card h3 { color: var(--gold); }
+
+  .tracker-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.92rem; }
+  .tracker-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--teal); }
+  .tracker-item.done { color: #16a34a; text-decoration: line-through; opacity: 0.8; }
+  .conf-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--border); }
+  .conf-row:last-child { border-bottom: none; }
+  .stars { display: flex; gap: 4px; }
+  .star { cursor: pointer; font-size: 1.2rem; color: var(--border); transition: var(--transition); user-select: none; }
+  .star:hover, .star.active { color: var(--gold); transform: scale(1.15); }
+  .time-row { display: grid; grid-template-columns: 120px 1fr; gap: 10px; margin-bottom: 10px; align-items: center; }
+  .time-row label { font-weight: 600; font-size: 0.88rem; color: var(--text-muted); }
+  .tf-options { display: flex; gap: 16px; margin: 10px 0; }
+  .tf-option { flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: 10px; cursor: pointer; text-align: center; font-weight: 700; transition: var(--transition); background: var(--bg); }
+  .tf-option:hover { border-color: var(--teal); }
+  .tf-option.selected.true { border-color: #16a34a; background: rgba(74,222,128,0.12); color: #16a34a; }
+  .tf-option.selected.false { border-color: #dc2626; background: rgba(220,38,38,0.10); color: #dc2626; }
+  .hint { background: var(--teal-light); padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; color: var(--teal-dark); margin-top: 8px; font-style: italic; }
+  .rank-dropdown { width: 100%; padding: 12px 16px; border: 2px solid var(--gold); border-radius: 10px; background: var(--gold-light); color: var(--navy); font-weight: 700; font-size: 1rem; cursor: pointer; font-family: inherit; }
+  .rank-display { margin-top: 14px; text-align: center; padding: 16px; background: linear-gradient(135deg, var(--navy), var(--navy-light)); color: var(--gold); border-radius: 10px; font-weight: 700; font-size: 1.05rem; }
+  .rank-display.empty { opacity: 0.4; font-weight: 400; font-style: italic; }
+  .danger-zone { margin-top: 24px; text-align: center; }
+  .btn-danger { background: transparent; color: #dc2626; border: 1px solid #dc2626; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: var(--transition); }
+  .btn-danger:hover { background: #dc2626; color: #fff; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(20,40,80,0.6); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal { background: var(--bg-card); border-radius: var(--radius); padding: 36px; max-width: 560px; width: 100%; box-shadow: var(--shadow-lg); text-align: center; animation: slideUp 0.4s cubic-bezier(.2,.8,.2,1); }
+  @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal h2 { margin: 0 0 8px; color: var(--teal-dark); font-size: 1.6rem; }
+  .modal .trophy { font-size: 4rem; margin-bottom: 8px; display: inline-block; animation: bounce 1s ease infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+  .summary-cell { background: var(--teal-light); border-radius: 10px; padding: 14px; }
+  .summary-cell .s-label { font-size: 0.72rem; color: var(--teal-dark); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700; }
+  .summary-cell .s-value { font-size: 1.3rem; font-weight: 800; color: var(--navy); margin-top: 4px; }
+  [data-theme="dark"] .summary-cell .s-value { color: var(--teal); }
+  .save-section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 700; margin: 18px 0 10px; }
+  .save-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 480px) { .save-grid { grid-template-columns: 1fr; } }
+  .save-btn { padding: 14px 16px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; transition: var(--transition); font-family: inherit; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .save-btn-pdf { background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; }
+  .save-btn-email { background: linear-gradient(135deg, var(--teal), var(--teal-dark)); color: #fff; }
+  .save-btn-copy { background: linear-gradient(135deg, var(--gold), #b88810); color: var(--navy); }
+  .save-btn-print { background: linear-gradient(135deg, var(--navy), var(--navy-light)); color: #fff; }
+  .save-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  #closeModalBtn { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 12px; font-family: inherit; }
+
+  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 10px; }
+  .toast { background: linear-gradient(135deg, var(--teal), var(--teal-dark)); color: #fff; padding: 14px 20px; border-radius: 10px; box-shadow: var(--shadow-lg); font-weight: 600; display: flex; align-items: center; gap: 10px; transform: translateX(120%); opacity: 0; transition: transform 0.4s cubic-bezier(.2,.8,.2,1), opacity 0.3s ease; min-width: 220px; }
+  .toast.show { transform: translateX(0); opacity: 1; }
+  .toast.error { background: linear-gradient(135deg, #dc2626, #991b1b); }
+
+  footer { text-align: center; padding: 32px 16px; color: var(--text-muted); font-size: 0.85rem; }
+
+  @media print { header.sticky, .sidenav, .start-mission, .header-actions, .danger-zone, #submitBtn, .theme-toggle { display: none !important; } .layout { grid-template-columns: 1fr; margin: 0; padding: 0; } .zone { opacity: 1 !important; transform: none !important; page-break-inside: avoid; } .dossier { break-inside: avoid; box-shadow: none; border: 1px solid #999; } .hero { background: #fff; color: #000; box-shadow: none; } body { background: #fff; } }
+</style>
+</head>
+<body>
+
+<header class="sticky">
+  <div class="header-inner">
+    <div class="brand">
+      <span>🕵️</span>
+      <span>ecobee Smart Security Hunt</span>
+      <span class="badge case-label">CASE #2026-SS</span>
+    </div>
+    <div class="timer-display" id="timerDisplay">00:00:00</div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label"><span id="progressText">0% complete</span> · <span id="zonesDoneText">0/6 zones</span></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" id="submitBtn">🏆 Submit Findings</button>
+      <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">🌙</button>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidenav">
+    <h4>Mission Zones</h4>
+    <ul id="zoneNavList">
+      <li><a href="#zone1"><span>🔎</span> Zone 1 · Products <span class="zone-status" data-zone-status="1">—</span></a></li>
+      <li><a href="#zone2"><span>💳</span> Zone 2 · Plans <span class="zone-status" data-zone-status="2">—</span></a></li>
+      <li><a href="#zone3"><span>🛡️</span> Zone 3 · Security <span class="zone-status" data-zone-status="3">—</span></a></li>
+      <li><a href="#zone4"><span>📼</span> Zone 4 · Storage <span class="zone-status" data-zone-status="4">—</span></a></li>
+      <li><a href="#zone5"><span>🚨</span> Zone 5 · Alerts <span class="zone-status" data-zone-status="5">—</span></a></li>
+      <li><a href="#zone6"><span>🔔</span> Zone 6 · Doorbell <span class="zone-status" data-zone-status="6">—</span></a></li>
+      <li><a href="#bonus"><span>🎮</span> Bonus Zone</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <span class="case-id case-label">🕵️ CASE FILE #2026-SS 🕵️</span>
+      <h1>The ecobee <span class="accent">Smart Security</span><br>Scavenger Hunt</h1>
+      <div class="tagline">A Mission for Curious Minds</div>
+      <div class="mission-stats">
+        <div class="stat-card"><div class="stat-label">🎯 Mission Type</div><div class="stat-value">Independent Research</div></div>
+        <div class="stat-card"><div class="stat-label">⏱ Time Allotted</div><div class="stat-value">60 minutes</div></div>
+        <div class="stat-card"><div class="stat-label">🏆 Objective</div><div class="stat-value">Locate all product intel</div></div>
+      </div>
+    </section>
+
+    <section class="briefing">
+      <h2>📋 Mission Briefing</h2>
+      <p>This is your chance to showcase your research skills! Follow these steps:</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-label">📁 STEP 1 · Begin Investigation</div>
+          <div>Click <strong>Start Mission</strong> below to begin your timer and unlock all zones.</div>
+        </div>
+        <div class="step">
+          <div class="step-label">✍️ STEP 2 · Record Answers</div>
+          <div>Fill in your findings — your progress auto-saves as you go.</div>
+        </div>
+      </div>
+      <div class="warning">
+        <div class="warn-title">⚠️ IMPORTANT REMINDER</div>
+        We encourage you to find the answers independently. <strong>Using AI assistance will result in disqualification</strong>, and your results will be marked zero. All answers can be found on our public-facing website.
+      </div>
+
+      <div class="name-input-block">
+        <label for="participantName">🕵️ Detective Name (for your saved file):</label>
+        <input type="text" class="name-input" id="participantName" placeholder="Enter your name…" autocomplete="name">
+      </div>
+
+      <div class="start-mission">
+        <button id="startBtn">▶️ Start Mission</button>
+        <button id="resetTimerBtn">⟳ Reset Timer</button>
+      </div>
+    </section>
+
+    <div id="zonesContainer"></div>
+
+    <section class="zone" id="bonus">
+      <div class="zone-banner bonus-banner">
+        <span class="zone-num case-label">BONUS ZONE</span>
+        <h2>🎮 Detective's Interactive Toolkit</h2>
+      </div>
+      <div class="toolkit-grid">
+        <div class="tool-card">
+          <h3>✅ Progress Tracker</h3>
+          <div id="progressTracker"></div>
+        </div>
+        <div class="tool-card">
+          <h3>⭐ Confidence Meter</h3>
+          <p style="font-size:0.85rem; color: var(--text-muted); margin: 0 0 10px;">Rate your confidence in each zone (1 = lowest, 5 = highest).</p>
+          <div id="confidenceMeter"></div>
+        </div>
+        <div class="tool-card">
+          <h3>📝 Detective's Case Notes</h3>
+          <p style="font-size:0.85rem; color: var(--text-muted); margin: 0 0 10px;">Anything tricky, surprising, or insightful?</p>
+          <textarea class="answer-textarea" id="caseNotes" placeholder="Click to enter your case notes…" style="min-height: 130px;"></textarea>
+        </div>
+        <div class="tool-card">
+          <h3>⏱ Time Spent Log</h3>
+          <div class="time-row"><label>Start Time</label><input class="answer-input" id="startTime" readonly placeholder="Auto-filled"></div>
+          <div class="time-row"><label>End Time</label><input class="answer-input" id="endTime" readonly placeholder="Auto-filled on submit"></div>
+          <div class="time-row"><label>Total Time</label><input class="answer-input" id="totalTime" readonly placeholder="Auto-calculated"></div>
+        </div>
+        <div class="tool-card">
+          <h3>❓ Bonus Question</h3>
+          <p style="font-size:0.85rem; color: var(--gold); font-weight: 600; margin: 0 0 10px;">Worth bonus points — answer carefully, Detective!</p>
+          <div style="background: var(--gold-light); border-left: 4px solid var(--gold); padding: 12px 14px; border-radius: 8px; margin-bottom: 10px;">
+            <strong>🔐 TRUE or FALSE:</strong> Do we offer any security-related discounts? If so, how much is it worth?
+          </div>
+          <div class="tf-options">
+            <div class="tf-option" data-tf="true">TRUE ✅</div>
+            <div class="tf-option" data-tf="false">FALSE ❌</div>
+          </div>
+          <input class="answer-input" id="bonusAmount" placeholder="If TRUE, how much? (e.g. up to ~10%)">
+          <div class="hint">💡 Hint: Check the Advanced Plan benefits in Intel Zone 2 👀</div>
+        </div>
+        <div class="tool-card">
+          <h3>🏅 Rank Yourself</h3>
+          <p style="font-size:0.85rem; color: var(--text-muted); margin: 0 0 10px;">Pick your detective rank for today's mission:</p>
+          <select class="rank-dropdown" id="rankSelect">
+            <option value="">Choose your rank…</option>
+            <option value="🎩 Rookie Investigator">🎩 Rookie Investigator</option>
+            <option value="🔍 Field Agent">🔍 Field Agent</option>
+            <option value="🕵️ Detective">🕵️ Detective</option>
+            <option value="🦅 Master Sleuth">🦅 Master Sleuth</option>
+            <option value="🏆 Legendary Spymaster">🏆 Legendary Spymaster</option>
+          </select>
+          <div class="rank-display empty" id="rankDisplay">No rank selected</div>
+        </div>
+      </div>
+      <div class="danger-zone">
+        <button class="btn-danger" id="resetBtn">⚠️ Reset All Progress</button>
+      </div>
+    </section>
+
+    <footer>
+      <p>🕵️ ecobee Smart Security Scavenger Hunt · Detective Edition · Case #2026-SS</p>
+      <p style="opacity:0.6;">Your progress auto-saves locally in your browser.</p>
+    </footer>
+  </main>
+</div>
+
+<div class="modal-overlay" id="completeModal">
+  <div class="modal">
+    <div class="trophy">🏆</div>
+    <h2>Mission Complete, Detective!</h2>
+    <p style="color: var(--text-muted);">Your intel has been logged. Save your findings below.</p>
+    <div class="summary-grid">
+      <div class="summary-cell"><div class="s-label">⏱ Total Time</div><div class="s-value" id="sumTime">—</div></div>
+      <div class="summary-cell"><div class="s-label">✅ Completion</div><div class="s-value" id="sumComplete">—</div></div>
+      <div class="summary-cell"><div class="s-label">⭐ Avg Confidence</div><div class="s-value" id="sumConfidence">—</div></div>
+      <div class="summary-cell"><div class="s-label">🏅 Rank</div><div class="s-value" id="sumRank" style="font-size: 0.95rem;">—</div></div>
+    </div>
+
+    <div class="save-section-title">📥 Save Your Answers</div>
+    <div class="save-grid">
+      <button class="save-btn save-btn-pdf" id="downloadPdfBtn">📄 Download PDF</button>
+      <button class="save-btn save-btn-email" id="emailBtn">📧 Email Answers</button>
+      <button class="save-btn save-btn-copy" id="copyBtn">📋 Copy to Clipboard</button>
+      <button class="save-btn save-btn-print" id="printBtn">🖨 Print</button>
+    </div>
+    <button id="closeModalBtn">Close</button>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const ZONES = [
+  { id: 1, icon: "🔎", title: "Product Specifications",
+    dossiers: [
+      { id: "z1d1", icon: "📹", title: "SmartCamera with Voice Control", questions: ["What is the video resolution?", "What is the field of view?", "Does it support two-way talk?"]},
+      { id: "z1d2", icon: "🌡️", title: "SmartSensor", questions: ["What does this sensor detect?"]},
+      { id: "z1d3", icon: "🚪", title: "SmartSensor for Doors and Windows", questions: ["What does the sensor detect?", "What is the expected battery life?", "What is the connectivity range?"]},
+      { id: "z1d4", icon: "🏠", title: "Smart Thermostat Premium", questions: ["When paired with the Smart Doorbell Camera, what feature does the Smart Thermostat Premium support that other ecobee thermostats do not?"]},
+      { id: "z1d5", icon: "🔔", title: "Smart Doorbell Camera (Wired)", questions: ["What is the video resolution?", "Does it support two-way audio?", "What is the field of view?"]}
+    ]
+  },
+  { id: 2, icon: "💳", title: "Subscription Features",
+    dossiers: [
+      { id: "z2d1", icon: "🥉", title: "Core Plan", questions: ["Does the Core plan include cloud video history? If so, for how many cameras?"]},
+      { id: "z2d2", icon: "🥈", title: "Plus Plan", questions: ["What type of monitoring is included?", "How many days of video storage are provided?", "How many cameras include 30-day event history?"]},
+      { id: "z2d3", icon: "🥇", title: "Advanced Plan", questions: ["What type of monitoring is included?", "How many days of video storage are provided?", "How many cameras include 30-day event history?", "What additional benefits are included?"]}
+    ]
+  },
+  { id: 3, icon: "🛡️", title: "Smart Security Features",
+    dossiers: [
+      { id: "z3d1", icon: "🤖", title: "Autopilot (Arm/Disarm Assist)", questions: ["How does Autopilot enhance home security?", "How does Autopilot adjust the system when you leave or arrive home?", "What technologies are used to detect your presence?"]},
+      { id: "z3d2", icon: "🏡", title: "Smart Home & Away", questions: ["How does Smart Home & Away help save energy?", "What sensors are used to determine if someone is home or away?", "How does this feature integrate with other ecobee devices?"]},
+      { id: "z3d3", icon: "📞", title: "24/7 Professional Monitoring", questions: ["What is included in the 24/7 professional monitoring service?", "How does professional monitoring improve emergency response times?", "What are the key benefits of professional monitoring?"]}
+    ]
+  },
+  { id: 4, icon: "📼", title: "Video Storage",
+    dossiers: [
+      { id: "z4d1", icon: "📼", title: "Video Storage Inquiry", questions: ["How many days of video storage are provided with the Plus plan?", "How many days of video storage are provided with the Advanced plan?", "What is the benefit of having extended video history?"]}
+    ]
+  },
+  { id: 5, icon: "🚨", title: "Smart Alerts", isAlertZone: true,
+    dossiers: [
+      { id: "z5d1", icon: "🚨", title: "Smart Alerts Features", questions: ["How do smart alerts help prevent potential security breaches?", "Can you customize the types of alerts you receive?"]}
+    ]
+  },
+  { id: 6, icon: "🔔", title: "Smart Doorbell Camera (Wired)",
+    dossiers: [
+      { id: "z6d1", icon: "📞", title: "Doorbell Deep Dive", questions: ["How does the Smart Doorbell Camera enhance the ecobee Smart Security system?", "What types of alerts can you receive from the Smart Doorbell Camera?", "How does the Smart Doorbell Camera work with Autopilot?"]},
+      { id: "z6d2", icon: "📼", title: "Video Footage Inquiry", questions: ["Can the Smart Doorbell Camera store video footage? If so, for how long?"]},
+      { id: "z6d3", icon: "🔌", title: "Compatibility Check", questions: ["Locate the Smart Doorbell Camera (wired) compatibility article on ecobee.com.", "Can the ecobee Smart Doorbell Camera be installed in place of a battery-powered doorbell?"]}
+    ]
+  }
+];
+
+const STORAGE_KEY = "ecobee_ss_hunt_v2";
+const defaultState = {
+  participantName: "", answers: {}, alertGrid: { core: "", plus: "", advanced: "" },
+  caseNotes: "", confidence: {}, bonusTF: null, bonusAmount: "", rank: "",
+  timer: { startedAt: null, elapsed: 0, running: false, endTime: null, totalTime: null, startTimeStr: null },
+  theme: "light"
+};
+let state = loadState();
+function loadState() {
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return Object.assign({}, defaultState, JSON.parse(raw)); } catch(e){}
+  return JSON.parse(JSON.stringify(defaultState));
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+// Render zones
+const zonesContainer = document.getElementById("zonesContainer");
+ZONES.forEach(zone => {
+  const sec = document.createElement("section");
+  sec.className = "zone"; sec.id = `zone${zone.id}`;
+  let alertGridHTML = "";
+  if (zone.isAlertZone) {
+    alertGridHTML = `
+      <div class="dossier">
+        <span class="dossier-label">🚨 INTEL · CAMERA HISTORY BY PLAN</span>
+        <div class="dossier-title">30-Day Event History by Plan</div>
+        <div class="question-text">How many cameras include 30-day event history in each plan?</div>
+        <div class="alert-grid">
+          <div class="alert-cell"><div class="alert-label">🥉 CORE</div><input class="answer-input alert-input" data-alert="core" placeholder="?"></div>
+          <div class="alert-cell"><div class="alert-label">🥈 PLUS</div><input class="answer-input alert-input" data-alert="plus" placeholder="?"></div>
+          <div class="alert-cell"><div class="alert-label">🥇 ADVANCED</div><input class="answer-input alert-input" data-alert="advanced" placeholder="?"></div>
+        </div>
+      </div>`;
+  }
+  sec.innerHTML = `
+    <div class="zone-banner">
+      <span class="zone-num case-label">INTEL ZONE ${zone.id}</span>
+      <h2>${zone.icon} ${zone.title}</h2>
+      <span class="zone-complete-badge" data-zone-badge="${zone.id}">✓ COMPLETE</span>
+    </div>
+    ${alertGridHTML}
+    <div class="dossier-grid">
+      ${zone.dossiers.map(d => `
+        <div class="dossier" data-dossier-id="${d.id}">
+          <span class="dossier-label">${d.icon} DOSSIER</span>
+          <div class="dossier-title">${d.title}</div>
+          ${d.questions.map((q, qi) => `
+            <div class="question">
+              <div class="question-text">${q}</div>
+              <textarea class="answer-textarea" data-qid="${d.id}_q${qi}" placeholder="Type your answer here..."></textarea>
+            </div>
+          `).join("")}
+        </div>
+      `).join("")}
+    </div>`;
+  zonesContainer.appendChild(sec);
+});
+
+// Hydrate inputs
+document.querySelectorAll("[data-qid]").forEach(el => {
+  const qid = el.dataset.qid;
+  if (state.answers[qid]) { el.value = state.answers[qid]; el.classList.add("filled"); }
+  el.addEventListener("input", () => {
+    state.answers[qid] = el.value;
+    if (el.value.trim()) el.classList.add("filled"); else el.classList.remove("filled");
+    saveState(); updateProgress();
+  });
+});
+document.querySelectorAll(".alert-input").forEach(el => {
+  const key = el.dataset.alert;
+  if (state.alertGrid[key]) { el.value = state.alertGrid[key]; el.classList.add("filled"); }
+  el.addEventListener("input", () => {
+    state.alertGrid[key] = el.value;
+    if (el.value.trim()) el.classList.add("filled"); else el.classList.remove("filled");
+    saveState(); updateProgress();
+  });
+});
+
+// Detective name
+const nameInput = document.getElementById("participantName");
+nameInput.value = state.participantName || "";
+nameInput.addEventListener("input", () => { state.participantName = nameInput.value; saveState(); });
+
+// Tracker
+const trackerEl = document.getElementById("progressTracker");
+ZONES.forEach(z => {
+  const div = document.createElement("div");
+  div.className = "tracker-item"; div.dataset.zoneTracker = z.id;
+  div.innerHTML = `<input type="checkbox" disabled> <span>Zone ${z.id} — ${z.title}</span>`;
+  trackerEl.appendChild(div);
+});
+
+// Confidence
+const confEl = document.getElementById("confidenceMeter");
+ZONES.forEach(z => {
+  const row = document.createElement("div");
+  row.className = "conf-row";
+  row.innerHTML = `<div class="conf-label">Zone ${z.id} · ${z.title}</div>
+    <div class="stars" data-conf-zone="${z.id}">
+      ${[1,2,3,4,5].map(n => `<span class="star" data-val="${n}">★</span>`).join("")}
+    </div>`;
+  confEl.appendChild(row);
+  const stars = row.querySelectorAll(".star");
+  const current = state.confidence[z.id] || 0;
+  stars.forEach((s,i) => { if (i < current) s.classList.add("active"); });
+  stars.forEach((s,i) => {
+    s.addEventListener("click", () => {
+      const val = i + 1; state.confidence[z.id] = val;
+      stars.forEach((ss, ii) => ss.classList.toggle("active", ii < val));
+      saveState();
+    });
+  });
+});
+
+// Notes, bonus, rank
+const caseNotesEl = document.getElementById("caseNotes");
+caseNotesEl.value = state.caseNotes || "";
+caseNotesEl.addEventListener("input", () => { state.caseNotes = caseNotesEl.value; saveState(); });
+
+document.querySelectorAll(".tf-option").forEach(opt => {
+  if (state.bonusTF === opt.dataset.tf) opt.classList.add("selected", opt.dataset.tf);
+  opt.addEventListener("click", () => {
+    document.querySelectorAll(".tf-option").forEach(o => o.classList.remove("selected","true","false"));
+    opt.classList.add("selected", opt.dataset.tf);
+    state.bonusTF = opt.dataset.tf; saveState();
+  });
+});
+const bonusAmountEl = document.getElementById("bonusAmount");
+bonusAmountEl.value = state.bonusAmount || "";
+bonusAmountEl.addEventListener("input", () => { state.bonusAmount = bonusAmountEl.value; saveState(); });
+
+const rankSel = document.getElementById("rankSelect");
+const rankDisp = document.getElementById("rankDisplay");
+if (state.rank) { rankSel.value = state.rank; rankDisp.textContent = state.rank; rankDisp.classList.remove("empty"); }
+rankSel.addEventListener("change", () => {
+  state.rank = rankSel.value;
+  if (rankSel.value) { rankDisp.textContent = rankSel.value; rankDisp.classList.remove("empty"); }
+  else { rankDisp.textContent = "No rank selected"; rankDisp.classList.add("empty"); }
+  saveState();
+  confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+});
+
+// Progress
+function totalQuestionCount() {
+  let total = 0;
+  ZONES.forEach(z => { z.dossiers.forEach(d => total += d.questions.length); if (z.isAlertZone) total += 3; });
+  return total;
+}
+function zoneCompletion(zone) {
+  let total = 0, done = 0;
+  zone.dossiers.forEach(d => d.questions.forEach((_, qi) => { total++; const v = state.answers[`${d.id}_q${qi}`]; if (v && v.trim()) done++; }));
+  if (zone.isAlertZone) ["core","plus","advanced"].forEach(k => { total++; if ((state.alertGrid[k] || "").trim()) done++; });
+  return { total, done };
+}
+function updateProgress() {
+  const total = totalQuestionCount();
+  let done = 0, zonesDone = 0;
+  ZONES.forEach(z => {
+    const c = zoneCompletion(z);
+    done += c.done;
+    const isDone = c.done === c.total;
+    if (isDone) zonesDone++;
+    const statusEl = document.querySelector(`[data-zone-status="${z.id}"]`);
+    if (statusEl) { statusEl.textContent = `${c.done}/${c.total}`; statusEl.classList.toggle("done", isDone); }
+    const badge = document.querySelector(`[data-zone-badge="${z.id}"]`);
+    if (badge) badge.classList.toggle("show", isDone);
+    z.dossiers.forEach(d => {
+      const dEl = document.querySelector(`[data-dossier-id="${d.id}"]`);
+      if (!dEl) return;
+      const allFilled = d.questions.every((_, qi) => (state.answers[`${d.id}_q${qi}`] || "").trim());
+      dEl.classList.toggle("complete", allFilled);
+    });
+    const tracker = document.querySelector(`[data-zone-tracker="${z.id}"]`);
+    if (tracker) { tracker.querySelector("input").checked = isDone; tracker.classList.toggle("done", isDone); }
+  });
+  const pct = Math.round((done / total) * 100);
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressText").textContent = pct + "% complete";
+  document.getElementById("zonesDoneText").textContent = `${zonesDone}/6 zones`;
+  return { pct, done, total, zonesDone };
+}
+
+// Timer
+const timerEl = document.getElementById("timerDisplay");
+const startBtn = document.getElementById("startBtn");
+const resetTimerBtn = document.getElementById("resetTimerBtn");
+const startTimeEl = document.getElementById("startTime");
+const endTimeEl = document.getElementById("endTime");
+const totalTimeEl = document.getElementById("totalTime");
+let timerInterval = null;
+function formatHMS(ms) {
+  const s = Math.floor(ms/1000);
+  return `${String(Math.floor(s/3600)).padStart(2,"0")}:${String(Math.floor((s%3600)/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+}
+function tickTimer() {
+  if (!state.timer.running) return;
+  const now = Date.now();
+  const total = state.timer.elapsed + (now - state.timer.startedAt);
+  timerEl.textContent = formatHMS(total);
+}
+function startTimer() {
+  if (state.timer.running) {
+    state.timer.elapsed += Date.now() - state.timer.startedAt;
+    state.timer.running = false;
+    clearInterval(timerInterval);
+    startBtn.textContent = "▶️ Resume Mission";
+    startBtn.classList.add("paused");
+  } else {
+    if (!state.timer.startTimeStr) {
+      const startStr = new Date().toLocaleString();
+      state.timer.startTimeStr = startStr;
+      startTimeEl.value = startStr;
+    }
+    state.timer.startedAt = Date.now();
+    state.timer.running = true;
+    timerInterval = setInterval(tickTimer, 250);
+    startBtn.textContent = "⏸ Pause Mission";
+    startBtn.classList.remove("paused");
+  }
+  saveState();
+}
+function resetTimer() {
+  if (!confirm("Reset the mission timer?")) return;
+  clearInterval(timerInterval);
+  state.timer = { startedAt: null, elapsed: 0, running: false, endTime: null, totalTime: null, startTimeStr: null };
+  timerEl.textContent = "00:00:00";
+  startTimeEl.value = ""; endTimeEl.value = ""; totalTimeEl.value = "";
+  startBtn.textContent = "▶️ Start Mission";
+  startBtn.classList.remove("paused");
+  saveState();
+}
+startBtn.addEventListener("click", startTimer);
+resetTimerBtn.addEventListener("click", resetTimer);
+if (state.timer.startTimeStr) startTimeEl.value = state.timer.startTimeStr;
+if (state.timer.endTime) endTimeEl.value = state.timer.endTime;
+if (state.timer.totalTime) totalTimeEl.value = state.timer.totalTime;
+if (state.timer.running && state.timer.startedAt) {
+  timerInterval = setInterval(tickTimer, 250);
+  startBtn.textContent = "⏸ Pause Mission";
+} else if (state.timer.elapsed > 0) {
+  timerEl.textContent = formatHMS(state.timer.elapsed);
+  startBtn.textContent = "▶️ Resume Mission";
+  startBtn.classList.add("paused");
+}
+
+// Submit
+const submitBtn = document.getElementById("submitBtn");
+const modal = document.getElementById("completeModal");
+const closeModalBtn = document.getElementById("closeModalBtn");
+submitBtn.addEventListener("click", () => {
+  if (state.timer.running) {
+    state.timer.elapsed += Date.now() - state.timer.startedAt;
+    state.timer.running = false;
+    clearInterval(timerInterval);
+  }
+  state.timer.totalTime = formatHMS(state.timer.elapsed);
+  state.timer.endTime = new Date().toLocaleString();
+  endTimeEl.value = state.timer.endTime;
+  totalTimeEl.value = state.timer.totalTime;
+  saveState();
+  const p = updateProgress();
+  const confVals = Object.values(state.confidence).filter(v => v > 0);
+  const avgConf = confVals.length ? (confVals.reduce((a,b)=>a+b,0)/confVals.length).toFixed(1) : "—";
+  document.getElementById("sumTime").textContent = state.timer.totalTime || "—";
+  document.getElementById("sumComplete").textContent = p.pct + "%";
+  document.getElementById("sumConfidence").textContent = avgConf === "—" ? "—" : `${avgConf} / 5`;
+  document.getElementById("sumRank").textContent = state.rank || "Unranked";
+  modal.classList.add("show");
+  const fire = (opts) => confetti(Object.assign({ origin: { y: 0.6 } }, opts));
+  fire({ particleCount: 80, spread: 70 });
+  setTimeout(() => fire({ particleCount: 60, spread: 100, angle: 60, origin: { x: 0 } }), 250);
+  setTimeout(() => fire({ particleCount: 60, spread: 100, angle: 120, origin: { x: 1 } }), 500);
+});
+closeModalBtn.addEventListener("click", () => modal.classList.remove("show"));
+modal.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("show"); });
+
+// Toast
+function showToast(message, isError) {
+  const container = document.getElementById("toastContainer");
+  const t = document.createElement("div");
+  t.className = "toast" + (isError ? " error" : "");
+  t.innerHTML = message;
+  container.appendChild(t);
+  setTimeout(() => t.classList.add("show"), 10);
+  setTimeout(() => {
+    t.classList.remove("show");
+    setTimeout(() => t.remove(), 400);
+  }, 3000);
+}
+
+// Build plain text version of all answers
+function buildPlainText() {
+  let txt = "ecobee Smart Security Scavenger Hunt — Detective Edition\n";
+  txt += "Case File #2026-SS\n";
+  txt += "=".repeat(60) + "\n\n";
+  txt += `Detective:   ${state.participantName || "—"}\n`;
+  txt += `Start Time:  ${state.timer.startTimeStr || "—"}\n`;
+  txt += `End Time:    ${state.timer.endTime || "—"}\n`;
+  txt += `Total Time:  ${state.timer.totalTime || "—"}\n`;
+  txt += `Rank:        ${state.rank || "—"}\n`;
+  ZONES.forEach(z => {
+    txt += `\n${"=".repeat(60)}\nINTEL ZONE ${z.id} — ${z.title.toUpperCase()}\n${"=".repeat(60)}\n`;
+    if (z.isAlertZone) {
+      txt += `\n30-Day Event History by Plan:\n`;
+      txt += `  Core: ${state.alertGrid.core || "—"}\n`;
+      txt += `  Plus: ${state.alertGrid.plus || "—"}\n`;
+      txt += `  Advanced: ${state.alertGrid.advanced || "—"}\n`;
+    }
+    z.dossiers.forEach(d => {
+      txt += `\n${d.icon} DOSSIER: ${d.title}\n`;
+      d.questions.forEach((q, qi) => {
+        txt += `  Q: ${q}\n`;
+        txt += `  A: ${state.answers[`${d.id}_q${qi}`] || "—"}\n`;
+      });
+    });
+    if (state.confidence[z.id]) txt += `\nConfidence: ${state.confidence[z.id]}/5\n`;
+  });
+  txt += `\n${"=".repeat(60)}\nCASE NOTES\n${"=".repeat(60)}\n${state.caseNotes || "—"}\n`;
+  txt += `\n${"=".repeat(60)}\nBONUS QUESTION\n${"=".repeat(60)}\n`;
+  txt += `Answer: ${state.bonusTF ? state.bonusTF.toUpperCase() : "—"}\n`;
+  txt += `Discount Amount: ${state.bonusAmount || "—"}\n`;
+  return txt;
+}
+
+// Build markdown version
+function buildMarkdown() {
+  let md = `# 🕵️ ecobee Smart Security Scavenger Hunt\n## Detective Edition — Case File #2026-SS\n\n`;
+  md += `| Field | Value |\n|---|---|\n`;
+  md += `| **Detective** | ${state.participantName || "—"} |\n`;
+  md += `| **Start Time** | ${state.timer.startTimeStr || "—"} |\n`;
+  md += `| **End Time** | ${state.timer.endTime || "—"} |\n`;
+  md += `| **Total Time** | ${state.timer.totalTime || "—"} |\n`;
+  md += `| **Rank** | ${state.rank || "—"} |\n\n`;
+  ZONES.forEach(z => {
+    md += `\n---\n\n## ${z.icon} Intel Zone ${z.id} — ${z.title}\n`;
+    if (z.isAlertZone) {
+      md += `\n**30-Day Event History by Plan:**\n`;
+      md += `- 🥉 Core: ${state.alertGrid.core || "—"}\n`;
+      md += `- 🥈 Plus: ${state.alertGrid.plus || "—"}\n`;
+      md += `- 🥇 Advanced: ${state.alertGrid.advanced || "—"}\n`;
+    }
+    z.dossiers.forEach(d => {
+      md += `\n### ${d.icon} ${d.title}\n`;
+      d.questions.forEach((q, qi) => {
+        md += `- **Q:** ${q}\n`;
+        md += `  - **A:** ${state.answers[`${d.id}_q${qi}`] || "_(no answer)_"}\n`;
+      });
+    });
+    if (state.confidence[z.id]) md += `\n> ⭐ **Confidence:** ${"★".repeat(state.confidence[z.id])}${"☆".repeat(5-state.confidence[z.id])} (${state.confidence[z.id]}/5)\n`;
+  });
+  md += `\n---\n\n## 📝 Case Notes\n${state.caseNotes || "_(no notes)_"}\n`;
+  md += `\n---\n\n## ❓ Bonus Question\n**Q:** Do we offer any security-related discounts? If so, how much is it worth?\n\n`;
+  md += `- **Answer:** ${state.bonusTF ? state.bonusTF.toUpperCase() : "—"}\n`;
+  md += `- **Discount Amount:** ${state.bonusAmount || "—"}\n`;
+  return md;
+}
+
+// PDF Generation
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 15;
+  const usableW = pageW - margin * 2;
+  let y = 0;
+
+  const NAVY = [20, 40, 80];
+  const TEAL = [0, 128, 128];
+  const GOLD = [212, 160, 23];
+  const GREEN = [20, 90, 50];
+  const GRAY = [100, 100, 100];
+  const LIGHT_TEAL = [220, 245, 240];
+
+  function ensureSpace(needed) {
+    if (y + needed > pageH - 20) { doc.addPage(); y = margin; addFooterLater = true; }
+  }
+  function addFooter() {
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(...GRAY);
+      doc.text(`ecobee Smart Security Scavenger Hunt · Case #2026-SS  ·  Page ${i} of ${pageCount}`, pageW/2, pageH - 8, { align: "center" });
+    }
+  }
+
+  // === HEADER BANNER ===
+  doc.setFillColor(...NAVY);
+  doc.rect(0, 0, pageW, 30, "F");
+  doc.setFillColor(...GOLD);
+  doc.rect(0, 30, pageW, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("ecobee Smart Security Scavenger Hunt", pageW/2, 13, { align: "center" });
+  doc.setFontSize(10);
+  doc.setTextColor(...GOLD);
+  doc.text("CASE FILE #2026-SS · DETECTIVE EDITION", pageW/2, 21, { align: "center" });
+  y = 42;
+
+  // === Participant block ===
+  const dateStr = new Date().toLocaleDateString();
+  doc.setTextColor(...NAVY);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Detective: `, margin, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(state.participantName || "—", margin + 22, y);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Date: `, pageW/2 + 10, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(dateStr, pageW/2 + 22, y);
+  y += 6;
+
+  doc.setFont("helvetica", "bold");
+  doc.text(`Total Time: `, margin, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(state.timer.totalTime || "—", margin + 22, y);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Rank: `, pageW/2 + 10, y);
+  doc.setFont("helvetica", "normal");
+  doc.text(state.rank || "—", pageW/2 + 22, y);
+  y += 10;
+
+  // === Zones ===
+  ZONES.forEach(z => {
+    ensureSpace(20);
+    doc.setFillColor(...TEAL);
+    doc.rect(margin, y, usableW, 10, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`INTEL ZONE ${z.id}  ·  ${z.title.toUpperCase()}`, margin + 4, y + 6.8);
+    y += 14;
+
+    if (z.isAlertZone) {
+      ensureSpace(20);
+      doc.setTextColor(...GREEN);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("30-Day Event History by Plan:", margin, y);
+      y += 5;
+      doc.setTextColor(...NAVY);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`Core: ${state.alertGrid.core || "—"}`, margin + 4, y); y += 5;
+      doc.text(`Plus: ${state.alertGrid.plus || "—"}`, margin + 4, y); y += 5;
+      doc.text(`Advanced: ${state.alertGrid.advanced || "—"}`, margin + 4, y); y += 7;
+    }
+
+    z.dossiers.forEach(d => {
+      ensureSpace(14);
+      doc.setTextColor(...GOLD);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.text("DOSSIER", margin, y);
+      y += 4;
+      doc.setTextColor(...GREEN);
+      doc.setFontSize(11);
+      doc.text(d.title.toUpperCase(), margin, y);
+      doc.setDrawColor(...TEAL);
+      doc.setLineWidth(0.3);
+      doc.line(margin, y + 1, margin + usableW, y + 1);
+      y += 5;
+
+      d.questions.forEach((q, qi) => {
+        doc.setTextColor(...NAVY);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9.5);
+        const qLines = doc.splitTextToSize(`Q: ${q}`, usableW - 4);
+        ensureSpace(qLines.length * 4.5 + 8);
+        doc.text(qLines, margin, y);
+        y += qLines.length * 4.5 + 1;
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(60, 60, 60);
+        const a = state.answers[`${d.id}_q${qi}`] || "—";
+        const aLines = doc.splitTextToSize(`A: ${a}`, usableW - 8);
+        ensureSpace(aLines.length * 4.5 + 3);
+        doc.text(aLines, margin + 4, y);
+        y += aLines.length * 4.5 + 3;
+      });
+      y += 2;
+    });
+
+    if (state.confidence[z.id]) {
+      ensureSpace(8);
+      const stars = "★".repeat(state.confidence[z.id]) + "☆".repeat(5 - state.confidence[z.id]);
+      doc.setTextColor(...GOLD);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text(`Confidence: ${stars}  (${state.confidence[z.id]}/5)`, margin, y);
+      y += 8;
+    }
+    y += 2;
+  });
+
+  // === Case Notes ===
+  ensureSpace(20);
+  doc.setFillColor(...NAVY);
+  doc.rect(margin, y, usableW, 8, "F");
+  doc.setTextColor(...GOLD);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("CASE NOTES", margin + 4, y + 5.5);
+  y += 12;
+  doc.setTextColor(60, 60, 60);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  const notes = state.caseNotes || "—";
+  const notesLines = doc.splitTextToSize(notes, usableW);
+  notesLines.forEach(line => {
+    ensureSpace(5);
+    doc.text(line, margin, y);
+    y += 5;
+  });
+  y += 4;
+
+  // === Bonus ===
+  ensureSpace(24);
+  doc.setFillColor(...GOLD);
+  doc.rect(margin, y, usableW, 8, "F");
+  doc.setTextColor(...NAVY);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text("BONUS QUESTION", margin + 4, y + 5.5);
+  y += 12;
+  doc.setTextColor(...NAVY);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  const bQ = "Do we offer any security-related discounts? If so, how much is it worth?";
+  const bQLines = doc.splitTextToSize(`Q: ${bQ}`, usableW);
+  doc.text(bQLines, margin, y);
+  y += bQLines.length * 5 + 2;
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(60, 60, 60);
+  doc.text(`Answer: ${state.bonusTF ? state.bonusTF.toUpperCase() : "—"}`, margin + 4, y); y += 5;
+  doc.text(`Discount Amount: ${state.bonusAmount || "—"}`, margin + 4, y); y += 5;
+
+  addFooter();
+  const safeName = (state.participantName || "anonymous").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+  const dateForFile = new Date().toISOString().slice(0, 10);
+  doc.save(`ecobee-scavenger-hunt-${safeName}-${dateForFile}.pdf`);
+  showToast("📄 PDF downloaded!");
+}
+
+// Email
+function emailAnswers() {
+  const name = state.participantName || "Detective";
+  const date = new Date().toLocaleDateString();
+  const subject = `ecobee Smart Security Scavenger Hunt — ${name} — ${date}`;
+  const body = buildPlainText();
+  if (body.length > 1800) {
+    // mailto has length limits; truncate gracefully and warn
+    const truncated = body.slice(0, 1700) + "\n\n[Answers truncated — please use Download PDF or Copy to Clipboard for full details.]";
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(truncated)}`;
+    showToast("📧 Email opened (answers truncated — use PDF for full)", true);
+  } else {
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    showToast("📧 Email draft opened!");
+  }
+}
+
+// Copy
+async function copyToClipboard() {
+  const md = buildMarkdown();
+  try {
+    await navigator.clipboard.writeText(md);
+    showToast("✅ Copied to clipboard!");
+  } catch(e) {
+    // Fallback
+    const ta = document.createElement("textarea");
+    ta.value = md; document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); showToast("✅ Copied to clipboard!"); }
+    catch(err) { showToast("⚠️ Copy failed — please try another method", true); }
+    document.body.removeChild(ta);
+  }
+}
+
+document.getElementById("downloadPdfBtn").addEventListener("click", downloadPDF);
+document.getElementById("emailBtn").addEventListener("click", emailAnswers);
+document.getElementById("copyBtn").addEventListener("click", copyToClipboard);
+document.getElementById("printBtn").addEventListener("click", () => window.print());
+
+// Reset
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (!confirm("⚠️ Reset ALL progress? This cannot be undone.")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+// Theme
+const themeToggle = document.getElementById("themeToggle");
+function applyTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  themeToggle.textContent = t === "dark" ? "☀️" : "🌙";
+}
+applyTheme(state.theme);
+themeToggle.addEventListener("click", () => {
+  state.theme = state.theme === "dark" ? "light" : "dark";
+  applyTheme(state.theme); saveState();
+});
+
+// Scroll observers
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(en => { if (en.isIntersecting) en.target.classList.add("in-view"); });
+}, { threshold: 0.08 });
+document.querySelectorAll(".zone").forEach(z => observer.observe(z));
+
+const navLinks = document.querySelectorAll(".sidenav a");
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(en => {
+    if (en.isIntersecting) {
+      navLinks.forEach(l => l.classList.toggle("active", l.getAttribute("href") === "#" + en.target.id));
+    }
+  });
+}, { rootMargin: "-30% 0px -50% 0px" });
+document.querySelectorAll(".zone").forEach(z => sectionObserver.observe(z));
+
+updateProgress();
+</script>
+</body>
+</html>
